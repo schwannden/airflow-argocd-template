@@ -22,3 +22,13 @@ Here is a list of secrets/files that you should change before your deployment to
 3. `overlays/develop/kustomize.yaml`: update ingress route to your develop instance host.
 4. `overlays/production/kustomize.yaml`: update ingress route to your production instance host.
 5. `Makefile`: update the `fernet-key` in setup command section.
+
+# Deploy ArgoCD
+1. `cd ${PROJECT_ROOT}/argocd`
+2. `make setup/namespace`: this create namespace to deploy ArgoCD
+3. `make setup/plugin`: this setup helm plugin for ArgoCD
+4. `K_ENV=develop make deploy`: this will deploy ArgoCD with overlays/develop config
+
+# Deploy Airflow Application Manifest to Argo CD
+1. cd ${PROJECT_ROOT}
+2. K_ENV=develop make deploy: this will deploy airflow application manifest on ArgoCD
