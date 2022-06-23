@@ -1,0 +1,176 @@
+airflowVersion: 2.3.2
+config:
+  api:
+    auth_backend: airflow.api.auth.backend.basic_auth
+  celery:
+    worker_concurrency: 8
+  celery_kubernetes_executor:
+    kubernetes_queue: kubernetes
+  core:
+    colored_console_log: 'False'
+    dags_folder: '{{ include "airflow_dags" . }}'
+    executor: '{{ .Values.executor }}'
+    load_examples: 'False'
+    remote_logging: '{{- ternary "True" "False" .Values.elasticsearch.enabled }}'
+    enable_xcom_pickling: 'True'
+  kubernetes:
+    airflow_configmap: '{{ include "airflow_config" . }}'
+    airflow_local_settings_configmap: '{{ include "airflow_config" . }}'
+    multi_namespace_mode: '{{ if .Values.multiNamespaceMode }}True{{ else }}False{{ end }}'
+    namespace: '{{ .Release.Namespace }}'
+    pod_template_file: '{{ include "airflow_pod_template_file" . }}/pod_template_file.yaml'
+    worker_container_repository: >-
+      {{ .Values.images.airflow.repository | default
+      .Values.defaultAirflowRepository }}
+    worker_container_tag: '{{ .Values.images.airflow.tag | default .Values.defaultAirflowTag }}'
+  logging:
+    colored_console_log: 'False'
+    remote_logging: '{{- ternary "True" "False" .Values.elasticsearch.enabled }}'
+  metrics:
+    statsd_host: '{{ printf "%s-statsd" .Release.Name }}'
+    statsd_on: '{{ ternary "True" "False" .Values.statsd.enabled }}'
+    statsd_port: 9125
+    statsd_prefix: airflow
+  scheduler:
+    run_duration: 41460
+    statsd_host: '{{ printf "%s-statsd" .Release.Name }}'
+    statsd_on: '{{ ternary "True" "False" .Values.statsd.enabled }}'
+    statsd_port: 9125
+    statsd_prefix: airflow
+  webserver:
+    enable_proxy_fix: 'True'
+    rbac: 'True'
+dags:
+  gitSync:
+    branch: master
+    containerName: git-sync
+    depth: 1
+    enabled: true
+    env: []
+    extraVolumeMounts: []
+    maxFailures: 0
+    repo: git@gitlab.ct.mobagel.com:ds/dags.git
+    resources: {}
+    rev: HEAD
+    securityContext: {}
+    subPath: "/dags"
+    sshKeySecret: airflow-ssh-git-secret
+    knownHosts: "TODO: use proper knownhost hash here"
+    uid: 65533
+    wait: 30
+  persistence:
+    accessMode: ReadWriteOnce
+    enabled: false
+    existingClaim: null
+    size: 1Gi
+    storageClassName: null
+data:
+  metadataConnection:
+    db: postgres
+    host: airflow-postgresql.airflow
+    pass: pastgres-password
+    port: 5432
+    protocol: postgresql
+    sslmode: disable
+    user: airflow
+defaultAirflowRepository: mobagel/airflow
+defaultAirflowTag: 2.3.2c1
+env: []
+executor: CeleryExecutor
+extraConfigMaps: {}
+fernetKeySecretName: airflow-fernet-key
+fullnameOverride: ''
+gid: 0
+images:
+  airflow:
+    pullPolicy: Always
+    repository: null
+    tag: null
+  flower:
+    pullPolicy: IfNotPresent
+    repository: null
+    tag: null
+  gitSync:
+    pullPolicy: IfNotPresent
+    repository: k8s.gcr.io/git-sync/git-sync
+    tag: v3.4.0
+  migrationsWaitTimeout: 60
+  pod_template:
+    pullPolicy: IfNotPresent
+    repository: null
+    tag: null
+  redis:
+    pullPolicy: IfNotPresent
+    repository: redis
+    tag: 6-buster
+  statsd:
+    pullPolicy: IfNotPresent
+    repository: apache/airflow
+    tag: airflow-statsd-exporter-2021.04.28-v0.17.0
+  useDefaultImageForMigration: false
+ingress:
+  enabled: true
+  flower:
+    annotations: {}
+    host: 'airflow-flower.mobagel.com'
+    hosts: ['airflow-flower.mobagel.com']
+    ingressClassName: ''
+    path: /
+    pathType: Prefix
+  web:
+    path: /
+    pathType: Prefix
+    annotations: {}
+    host: 'airflow.mobagel.com'
+    hosts: ['airflow.mobagel.com']
+    ingressClassName: ''
+    precedingPaths: []
+    succeedingPaths: []
+logs:
+  persistence:
+    enabled: false
+    existingClaim: null
+    size: 30Gi
+    storageClassName: null
+ports:
+  airflowUI: 8080
+  flowerUI: 5555
+  redisDB: 6379
+  statsdIngest: 9125
+  statsdScrape: 9102
+  workerLogs: 8793
+postgresql:
+  enabled: true
+  postgresqlPassword: airflow-postgres-secretive-password-so-secretive
+  postgresqlUsername: airflow
+redis:
+  enabled: true
+  password: airflow-redis-secretive-password-so-secretive
+registry:
+  connection: {}
+  secretName: null
+uid: 50000
+webserver:
+  defaultUser:
+    email: admin@example.com
+    enabled: true
+    firstName: admin
+    lastName: user
+    password: admin-password
+    role: Admin
+    username: admin
+webserverSecretKeySecretName:	airflow-webserver-secret-key
+workers:
+  keda:
+    cooldownPeriod: 30
+    enabled: false
+    maxReplicaCount: 10
+    minReplicaCount: 0
+    namespaceLabels: {}
+    pollingInterval: 5
+  persistence:
+    enabled: true
+    fixPermissions: false
+    size: 10Gi
+    storageClassName: null
+  replicas: 1

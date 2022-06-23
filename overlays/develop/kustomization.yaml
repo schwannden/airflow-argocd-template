@@ -1,0 +1,94 @@
+resources:
+- ../../base
+
+patchesStrategicMerge:
+- |-
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: airflow-airflow-ingress
+  spec:
+    rules:
+    - host: airflow-dev-domain.domain.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: airflow-webserver
+              port:
+                name: airflow-ui
+          path: /
+          pathType: Prefix
+  ---
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: airflow-flower-ingress
+  spec:
+    rules:
+    - host: airflow-dev-flower-domain.domain.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: airflow-flower
+              port:
+                name: flower-ui
+          path: /
+          pathType: Prefix
+  ---
+  apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    name: airflow-worker
+  spec:
+    replicas: 1
+    template:
+      spec:
+        containers:
+        - env:
+          - name: GIT_SYNC_BRANCH
+            value: develop
+          name: git-sync
+        initContainers:
+        - env:
+          - name: GIT_SYNC_BRANCH
+            value: develop
+          name: git-sync-init
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: airflow-scheduler
+  spec:
+    template:
+      spec:
+        containers:
+        - env:
+          - name: GIT_SYNC_BRANCH
+            value: develop
+          name: git-sync
+        initContainers:
+        - env:
+          - name: GIT_SYNC_BRANCH
+            value: develop
+          name: git-sync-init
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: airflow-triggerer
+  spec:
+    template:
+      spec:
+        containers:
+        - env:
+          - name: GIT_SYNC_BRANCH
+            value: develop
+          name: git-sync
+        initContainers:
+        - env:
+          - name: GIT_SYNC_BRANCH
+            value: develop
+          name: git-sync-init
+

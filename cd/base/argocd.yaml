@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: airflow
+spec:
+  project: default
+  source:
+    repoURL: 'git@gitlab.ct.mobagel.com:infra/airflow.git'
+    path: overlays/production
+    plugin:
+      name: kustomized-helm
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: airflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+      - Force=true
+      - Replace=true
+
